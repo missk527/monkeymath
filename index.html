@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Forest Multiplication Practice (1–15)</title>
+<style>
+  :root{
+    --bg:#0f2e1f;
+    --bg2:#183f29;
+    --panel:#1e472f;
+    --accent:#9be39b;
+    --accent2:#7fd47f;
+    --text:#f1f5f0;
+    --muted:#cfe8cf;
+    --error:#ffb4b4;
+    --warn:#ffd27a;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    color:var(--text);
+    background:
+      radial-gradient(1200px 600px at 80% -10%, #25573b44, transparent 60%),
+      linear-gradient(180deg, var(--bg), var(--bg2));
+    overflow-x:hidden;
+  }
+
+  /* Subtle animated forest background */
+  .forest{
+    position:fixed; inset:0; z-index:-1; overflow:hidden; pointer-events:none;
+    opacity:.5;
+  }
+  .tree{
+    position:absolute; bottom:-10px;
+    width:120px; height:220px;
+    background:
+      linear-gradient(#2a6b42, #1c4a30);
+    clip-path: polygon(50% 0%, 65% 20%, 58% 20%, 75% 40%, 65% 40%, 85% 60%, 70% 60%, 95% 85%, 5% 85%, 30% 60%, 15% 60%, 35% 40%, 25% 40%, 42% 20%, 35% 20%);
+    filter: drop-shadow(0 8px 4px rgba(0,0,0,.25));
+    animation: sway 6s ease-in-out infinite;
+  }
+  .trunk{
+    position:absolute; bottom:0; left:50%;
+    transform:translateX(-50%);
+    width:20px; height:60px; border-radius:6px;
+    background: linear-gradient(#6b3f1f, #3f2412);
+  }
+  @keyframes sway{
+    0%,100%{ transform: translateX(0) rotate(-1deg) }
+    50%{ transform: translateX(0) rotate(1deg) }
+  }
+
+  header{
+    padding:24px 16px 0;
+    display:flex; align-items:center; justify-content:center; gap:10px;
+  }
+  .title{
+    display:flex; align-items:center; gap:12px;
+    background: linear-gradient(135deg,#2a6b42,#153a26);
+    border:1px solid #2e6744;
+    padding:12px 18px; border-radius:16px;
+    box-shadow: 0 6px 20px rgba(0,0,0,.25), inset 0 0 0 1px rgba(255,255,255,.05);
+  }
+  .title .emoji{font-size:26px}
+  .title h1{margin:0; font-size:20px; letter-spacing:.5px; font-weight:800}
+
+  main{
+    max-width:980px; margin:16px auto 80px; padding:0 16px;
+  }
+  .card{
+    background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.00));
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:20px; box-shadow: 0 10px 30px rgba(0,0,0,.25), inset 0 0 0 1px rgba(255,255,255,.04);
+    padding:18px; backdrop-filter: blur(6px);
+  }
+  .grid{ display:grid; gap:16px; }
+  @media (min-width:900px){ .grid{ grid-template-columns: 1.1fr .9fr; } }
+  h2{ margin:6px 0 12px; font-size:18px }
+  fieldset{
+    border:0; padding:0; margin:0;
+    display:grid; grid-template-columns: repeat(5, minmax(40px,1fr)); gap:8px;
+  }
+  .chip{
+    display:inline-flex; align-items:center; justify-content:center;
+    background:#274f37; border:1px solid #2b6b46; color:var(--muted);
+    padding:10px 0; border-radius:12px; cursor:pointer; user-select:none;
+    transition: transform .15s ease, background .2s ease, color .2s ease;
+    font-weight:700;
+  }
+  input[type=checkbox]{ display:none }
+  input[type=checkbox]:checked + .chip{
+    background:#295a3f; color:var(--accent);
+    box-shadow: inset 0 0 0 1.5px var(--accent2), 0 6px 18px rgba(0,0,0,.25);
+    transform: translateY(-1px);
+  }
+
+  .controls{ display:grid; gap:12px; grid-template-columns: 1fr 1fr; }
+  .controls > div{ background:#204833; padding:12px; border-radius:14px; border:1px solid #2c6f49}
+  .controls h3{ margin:0 0 8px; font-size:14px; color:var(--muted) }
+  .row{ display:flex; gap:8px; flex-wrap:wrap; align-items:center }
+  select, input[type=number], input[type=text]{
+    width:100%; background:#173826; color:var(--text);
+    border:1px solid #2a6644; border-radius:10px; padding:10px 12px; outline:none;
+  }
+  .radio{
+    display:inline-flex; gap:8px; align-items:center; background:#173826; padding:8px 10px; border-radius:10px; border:1px solid #2a6644;
+  }
+  button{
+    background:linear-gradient(180deg,#4aa65a,#2f8a48);
+    border:1px solid #4db06a; color:#08361c; font-weight:900; letter-spacing:.5px;
+    padding:12px 18px; border-radius:14px; cursor:pointer;
+    box-shadow: 0 8px 16px rgba(0,0,0,.25);
+    transition: transform .1s ease, filter .2s ease;
+  }
+  button:hover{ filter: brightness(1.05) }
+  button:active{ transform: translateY(1px) }
+
+  .game{ margin-top:18px; display:none; gap:16px; }
+  .hud{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; }
+  .pill{ background:#204833; border:1px solid #2c6f49; padding:10px 12px; border-radius:12px; text-align:center; }
+  .progress{ height:12px; background:#173826; border:1px solid #2a6644; border-radius:999px; overflow:hidden; }
+  .bar{ height:100%; width:0%; background:linear-gradient(90deg,#8de28d,#44c26c,#2fa65a)}
+  .question{
+    margin-top:6px; display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap;
+    font-size: clamp(28px, 6vw, 48px); font-weight:900;
+    background:#1b3c2a; border:1px solid #2a6644; border-radius:18px; padding:16px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
+  }
+  .big{ font-size: clamp(34px, 8vw, 56px) }
+  .answers{ display:grid; grid-template-columns: repeat(2, 1fr); gap:10px; margin-top:12px; }
+  @media (min-width:720px){ .answers{ grid-template-columns: repeat(4, 1fr)} }
+  .ans{
+    background:#173826; border:1px solid #2a6644; color:var(--text);
+    padding:12px; border-radius:12px; text-align:center; font-weight:800; cursor:pointer;
+  }
+  .ans.correct{ outline:2px solid #8de28d; background:#1f5b3f }
+  .ans.wrong{ outline:2px solid var(--error); background:#5b1f1f }
+  .input-wrap{ display:flex; gap:8px; margin-top:12px; align-items:center; justify-content:center; }
+  .input-wrap input{ max-width:180px; text-align:center; font-size:22px; }
+  .feedback{ min-height:24px; text-align:center; margin-top:8px; font-weight:800; }
+  .feedback.ok{ color:var(--accent) }
+  .feedback.no{ color:var(--error) }
+  .footer{ display:flex; justify-content:space-between; align-items:center; margin-top:10px; gap:10px; }
+  .ghost{ background:#204833; color:var(--muted); border:1px dashed #2c6f49; }
+
+  .results{ display:none; margin-top:18px; }
+  table{ width:100%; border-collapse:collapse; background:#173826; border-radius:12px; overflow:hidden; }
+  th, td{ padding:10px; border-bottom:1px solid #2a6644; text-align:center }
+  th{ position:sticky; top:0; background:#1e472f; }
+  tr:last-child td{ border-bottom:0 }
+  .tag{ padding:4px 8px; border-radius:999px; font-size:12px }
+  .tag.ok{ background:#1f5b3f; color:var(--accent)}
+  .tag.no{ background:#5b1f1f; color:var(--error)}
+
+  /* Critter bubbles: avoid overlapping the Next button on phones */
+  .critters{
+    position: fixed; right: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    display:flex; gap:8px; opacity:.9; pointer-events:none;
+    z-index: 1;
+  }
+  @media (max-width: 720px){
+    /* lift critters above the footer area */
+    .critters{ bottom: calc(90px + env(safe-area-inset-bottom)) }
+    /* add extra padding under the footer so content doesn't sit under the critters */
+    .game .footer{ padding-bottom: 76px; }
+  }
+  .critter{
+    padding:8px 10px; background:#1e472f; border:1px solid #2c6f49; border-radius:12px;
+    box-shadow: 0 6px 12px rgba(0,0,0,.3);
+    font-size:14px;
+  }
+</style>
+</head>
+<body>
+  <div class="forest" aria-hidden="true" id="forest"></div>
+
+  <header>
+    <div class="title">
+      <div class="emoji">🌲🦌🍄</div>
+      <h1>Forest Multiplication Practice (1–15)</h1>
+    </div>
+  </header>
+
+  <main class="grid">
+    <section class="card">
+      <h2>Select the tables to practice</h2>
+      <fieldset id="tables"></fieldset>
+      <div class="controls" style="margin-top:12px">
+        <div>
+          <h3>Number of questions</h3>
+          <div class="row">
+            <button type="button" class="ghost" data-q="10">10 Qs</button>
+            <button type="button" class="ghost" data-q="20">20 Qs</button>
+            <div style="flex:1 1 120px">
+              <input type="number" id="qCount" min="5" max="200" step="1" value="15" aria-label="Custom count"/>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h3>Answer mode</h3>
+          <div class="row" role="radiogroup" aria-label="Answer mode">
+            <label class="radio"><input type="radio" name="mode" value="mcq" checked/> Multiple choice</label>
+            <label class="radio"><input type="radio" name="mode" value="input"/> Type the answer</label>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <label class="radio"><input type="radio" name="range" value="1-10" checked/> Factor 1–10</label>
+            <label class="radio"><input type="radio" name="range" value="1-15"/> Factor 1–15</label>
+          </div>
+        </div>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <button id="startBtn">Start ▶</button>
+        <button id="resetBtn" class="ghost">Reset</button>
+        <button id="toggleCritters" class="ghost">Hide critters</button>
+      </div>
+      <p style="margin-top:8px; color:var(--muted)">Tip: tick the tables above (default: all). Choose the number of questions, mode, and factor range.</p>
+    </section>
+
+    <section class="card">
+      <div class="hud">
+        <div class="pill">⏳ Time: <span id="time">00:00</span></div>
+        <div class="pill">🔥 Streak: <span id="streak">0</span></div>
+        <div class="pill">✅ Score: <span id="score">0</span></div>
+      </div>
+      <div class="progress" aria-label="Progress">
+        <div class="bar" id="bar"></div>
+      </div>
+
+      <div class="game" id="game">
+        <div class="question big" id="question" aria-live="polite">Press “Start” to begin!</div>
+        <div class="answers" id="answers" aria-label="Multiple-choice answers"></div>
+
+        <div class="input-wrap" id="inputWrap" style="display:none">
+          <label for="answerInput" class="sr-only">Answer</label>
+          <input id="answerInput" type="number" inputmode="numeric" placeholder="Type your answer" />
+          <button id="submitBtn">Submit</button>
+        </div>
+
+        <div class="feedback" id="feedback"></div>
+
+        <div class="footer">
+          <button id="skipBtn" class="ghost">Skip ⤴</button>
+          <button id="nextBtn">Next ▶</button>
+        </div>
+      </div>
+
+      <div class="results" id="results">
+        <h2>Results</h2>
+        <p>Total: <strong id="rTotal">0</strong>; Correct: <strong id="rCorrect">0</strong>; Accuracy: <strong id="rRate">0%</strong>; Time: <strong id="rTime">00:00</strong></p>
+        <div style="max-height:280px; overflow:auto; border:1px solid #2a6644; border-radius:12px;">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Question</th><th>Your answer</th><th>Correct answer</th><th>Result</th></tr>
+            </thead>
+            <tbody id="rBody"></tbody>
+          </table>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <button id="againBtn">Play again ♻</button>
+          <button id="downloadCSV" class="ghost">Download answers (CSV)</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="critters" id="critters">
+    <div class="critter">🦊 You got this!</div>
+    <div class="critter">🦉 Stay focused!</div>
+    <div class="critter">🐿️ Keep going!</div>
+  </div>
+
+<script>
+/* ====== Utility ====== */
+const $ = (sel)=>document.querySelector(sel);
+const $$ = (sel)=>Array.from(document.querySelectorAll(sel));
+
+function pad(n){ return String(n).padStart(2,'0') }
+function formatTime(sec){
+  const m = Math.floor(sec/60), s = sec%60;
+  return pad(m)+':'+pad(s);
+}
+function randInt(min, max){ return Math.floor(Math.random()*(max-min+1))+min }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]] } return a }
+
+/* ====== Background trees ====== */
+function renderForest(){
+  const forest = document.getElementById('forest');
+  forest.innerHTML='';
+  const W = window.innerWidth;
+  const count = Math.min(24, Math.floor(W/60));
+  for(let i=0; i<count; i++){
+    const t = document.createElement('div');
+    t.className='tree';
+    t.style.left = (i*(100/count)+randInt(-2,2))+'%';
+    t.style.transform += ` scale(${0.6+Math.random()*0.8}) rotate(${randInt(-2,2)}deg)`;
+    t.style.animationDelay = (Math.random()*6)+'s';
+    const tr = document.createElement('div');
+    tr.className='trunk';
+    t.appendChild(tr);
+    forest.appendChild(t);
+  }
+}
+window.addEventListener('resize', renderForest);
+renderForest();
+
+/* ====== Build table checkboxes ====== */
+const tablesWrap = document.getElementById('tables');
+for(let n=1;n<=15;n++){
+  const id='t'+n;
+  const cb = document.createElement('input');
+  cb.type='checkbox'; cb.id=id; cb.checked=true; cb.value=String(n);
+  const lab = document.createElement('label'); lab.className='chip'; lab.htmlFor=id; lab.textContent = n + ' times';
+  tablesWrap.appendChild(cb); tablesWrap.appendChild(lab);
+}
+
+/* ====== State ====== */
+let settings = {
+  tables: new Set([...Array(15)].map((_,i)=>i+1)),
+  qCount: 15,
+  mode: 'mcq',  // 'input'
+  factorMax: 10
+};
+let game = {
+  questions: [],
+  idx: 0,
+  score: 0,
+  streak: 0,
+  startedAt: 0,
+  timerId: null,
+  elapsed: 0,
+  records: []
+};
+
+/* ====== Settings interactions ====== */
+$$('input[type=checkbox]').forEach(cb=>{
+  cb.addEventListener('change', ()=>{
+    if(cb.checked) settings.tables.add(Number(cb.value));
+    else settings.tables.delete(Number(cb.value));
+  });
+});
+$('#qCount').addEventListener('input', e=>{
+  const v = Math.max(5, Math.min(200, Number(e.target.value||15)));
+  settings.qCount = v;
+});
+$$('input[name=mode]').forEach(r=>{
+  r.addEventListener('change', ()=>settings.mode=r.value);
+});
+$$('input[name=range]').forEach(r=>{
+  r.addEventListener('change', ()=>settings.factorMax = r.value==='1-10' ? 10 : 15);
+});
+$$('[data-q]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{ settings.qCount = Number(btn.dataset.q); $('#qCount').value = settings.qCount })
+});
+$('#resetBtn').addEventListener('click', ()=>{
+  settings.tables = new Set([...Array(15)].map((_,i)=>i+1));
+  $$('input[type=checkbox]').forEach(cb=>cb.checked=true);
+  settings.qCount=15; $('#qCount').value=15;
+  settings.mode='mcq'; $$('input[name=mode]')[0].checked=true;
+  settings.factorMax=10; $$('input[name=range]')[0].checked=true;
+});
+
+/* New: hide/show critters toggle */
+let crittersVisible = true;
+$('#toggleCritters').addEventListener('click', ()=>{
+  crittersVisible = !crittersVisible;
+  const el = $('#critters');
+  el.style.display = crittersVisible ? 'flex' : 'none';
+  $('#toggleCritters').textContent = crittersVisible ? 'Hide critters' : 'Show critters';
+});
+
+/* ====== Game generation ====== */
+function makeQuestion(){
+  const a = Array.from(settings.tables)[randInt(0, settings.tables.size-1)];
+  const b = randInt(1, settings.factorMax);
+  return { a, b, ans: a*b };
+}
+function generateQuestions(){
+  const set = new Set();
+  const qs = [];
+  let guard=0;
+  while(qs.length < settings.qCount && guard<5000){
+    guard++;
+    const q = makeQuestion();
+    const key = q.a+'x'+q.b;
+    if(!set.has(key)){
+      set.add(key); qs.push(q);
+    }
+  }
+  return shuffle(qs);
+}
+
+/* ====== Timer ====== */
+function startTimer(){
+  game.startedAt = Date.now() - game.elapsed*1000;
+  game.timerId = setInterval(()=>{
+    game.elapsed = Math.floor((Date.now()-game.startedAt)/1000);
+    $('#time').textContent = formatTime(game.elapsed);
+  }, 250);
+}
+function stopTimer(){ clearInterval(game.timerId); game.timerId=null }
+
+/* ====== UI ====== */
+function updateHUD(){
+  $('#score').textContent = game.score;
+  $('#streak').textContent = game.streak;
+  const pct = Math.round((game.idx/game.questions.length)*100);
+  $('#bar').style.width = pct+'%';
+}
+
+function renderQuestion(){
+  const q = game.questions[game.idx];
+  $('#question').textContent = `${q.a} × ${q.b} = ?`;
+  $('#feedback').textContent = '';
+
+  if(settings.mode==='mcq'){
+    $('#answers').style.display='grid';
+    $('#inputWrap').style.display='none';
+    const answers = new Set([q.ans]);
+    while(answers.size<4){
+      let delta = randInt(-10,10);
+      if(delta===0) delta=1;
+      const v = Math.max(0, q.ans + delta * randInt(1,2));
+      answers.add(v);
+    }
+    const arr = shuffle([...answers]).slice(0,4);
+    const wrap = $('#answers'); wrap.innerHTML='';
+    arr.forEach(v=>{
+      const btn = document.createElement('button');
+      btn.className = 'ans';
+      btn.textContent = v;
+      btn.addEventListener('click', ()=>checkAnswer(v, btn));
+      wrap.appendChild(btn);
+    });
+  }else{
+    $('#answers').style.display='none';
+    $('#inputWrap').style.display='flex';
+    const inp = $('#answerInput');
+    inp.value=''; inp.focus();
+  }
+  updateHUD();
+}
+
+function checkAnswer(value, btn=null){
+  const q = game.questions[game.idx];
+  const correct = Number(value)===q.ans;
+  if(correct){
+    game.score += 10;
+    game.streak += 1;
+    $('#feedback').textContent = '✅ Great!';
+    $('#feedback').className='feedback ok';
+    if(btn){ btn.classList.add('correct') }
+    sparkle();
+  }else{
+    game.streak = 0;
+    $('#feedback').textContent = `❌ Try again! Correct answer: ${q.ans}`;
+    $('#feedback').className='feedback no';
+    if(btn){ btn.classList.add('wrong') }
+  }
+  game.records.push({i:game.idx+1, q:`${q.a}×${q.b}`, your:String(value), correct:q.ans, ok:correct});
+  $('#nextBtn').focus();
+}
+
+function nextQuestion(){
+  if(game.idx < game.questions.length-1){
+    game.idx++;
+    renderQuestion();
+  }else{
+    finish();
+  }
+}
+
+function skip(){
+  const q = game.questions[game.idx];
+  game.records.push({i:game.idx+1, q:`${q.a}×${q.b}`, your:'(skipped)', correct:q.ans, ok:false});
+  game.streak=0;
+  nextQuestion();
+}
+
+function finish(){
+  stopTimer();
+  $('#game').style.display='none';
+  $('#results').style.display='block';
+  $('#rTotal').textContent = game.questions.length;
+  const correct = game.records.filter(r=>r.ok).length;
+  $('#rCorrect').textContent = correct;
+  $('#rRate').textContent = Math.round(correct*100/game.questions.length)+'%';
+  $('#rTime').textContent = formatTime(game.elapsed);
+  const tbody = $('#rBody'); tbody.innerHTML='';
+  game.records.forEach(r=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${r.i}</td><td>${r.q}</td><td>${r.your}</td><td>${r.correct}</td>
+      <td><span class="tag ${r.ok?'ok':'no'}">${r.ok?'✔ Correct':'✖ Wrong'}</span></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function start(){
+  if(settings.tables.size===0){
+    alert('Please select at least one times table.'); return;
+  }
+  game.questions = generateQuestions();
+  game.idx=0; game.score=0; game.streak=0; game.records=[]; game.elapsed=0;
+  $('#answers').innerHTML=''; $('#feedback').textContent='';
+  $('#results').style.display='none';
+  $('#game').style.display='grid';
+  startTimer();
+  renderQuestion();
+}
+
+/* ====== Effects ====== */
+function sparkle(){
+  const q = $('#question');
+  q.animate([{transform:'scale(1)'},{transform:'scale(1.05)'},{transform:'scale(1)'}], {duration:250});
+}
+
+/* ====== Events ====== */
+$('#startBtn').addEventListener('click', start);
+$('#againBtn')?.addEventListener('click', ()=>{ $('#results').style.display='none'; start() });
+$('#nextBtn').addEventListener('click', nextQuestion);
+$('#skipBtn').addEventListener('click', skip);
+$('#submitBtn').addEventListener('click', ()=>{
+  const v = $('#answerInput').value.trim();
+  if(v==='') return;
+  checkAnswer(Number(v));
+});
+$('#answerInput').addEventListener('keydown', (e)=>{
+  if(e.key==='Enter'){ $('#submitBtn').click() }
+});
+
+/* Keyboard shortcuts */
+document.addEventListener('keydown', (e)=>{
+  if($('#game').style.display!=='grid') return;
+  if(e.key==='ArrowRight') nextQuestion();
+  if(e.key==='Escape') skip();
+});
+
+/* ====== Export CSV ====== */
+function toCSV(rows){
+  const header = ['#','Question','Your Answer','Correct Answer','Result'];
+  const lines = [header.join(',')];
+  rows.forEach(r=>{
+    lines.push([r.i, r.q, r.your, r.correct, r.ok?'Correct':'Wrong'].join(','));
+  });
+  return '\ufeff' + lines.join('\n'); // BOM for Excel
+}
+$('#downloadCSV').addEventListener('click', ()=>{
+  const csv = toCSV(game.records);
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'multiplication-practice-record.csv';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+});
+</script>
+</body>
+</html>
